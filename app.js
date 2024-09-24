@@ -33,15 +33,29 @@ app.get('/', (req, res) => {
 //處理來自客戶端/restaurant的請求
 // express 就會在使用者輸入 localhost:3000/restaurant 時，根據 index.hbs 這支檔案回傳對應的 HTML 給瀏覽器。
 app.get('/restaurant', (req, res) => {
-  res.render('index',{ restaurant: restaurant})
+  const keyword = req.query.keyword?.trim();  // 改為 keyword，並且index的搜尋的name改為search
+  const matchedRestaurant = keyword ? restaurant.filter((r) =>
+    r.name.toLowerCase().includes(keyword.toLowerCase()) ||
+    r.name_en.toLowerCase().includes(keyword.toLowerCase()) ||
+    r.category.toLowerCase().includes(keyword.toLowerCase())
+  ) : restaurant //只搜尋餐廳類別與名稱
+  res.render('index', { restaurant: matchedRestaurant, keyword })
 })
+
 //這裡的路徑 '/movie/:id' 包含了 :id 這個動態參數。:id 表示這是一個可變的部分，它不是固定的字串，而是用戶在訪問路由時提供的值。換句話說，當用戶請求 /movie/123 或 /movie/456 時，id 的值會根據用戶的請求不同而變動。
 //req.params 是 Express 中用來存放 URL 中動態參數的物件。這裡的 req.params.id 表示取得取得使用者於網址上 :id 位置輸入的內容，並將其存入變數 id 中。假設用戶訪問的網址是 /movie/123，那麼 req.params.id 的值就是 123。
 //res.send 是用來發送回應給客戶端的函數。這裡使用了模板字串（Template String）來嵌入變數 id，並回應字串 read movie: ${id}。假設 id 是 123，那麼發送的回應就是 'read movie: 123'。
 app.get('/restaurant/:id', (req, res) => {
   const id = req.params.id
-  res.send(`read restaurant: ${id}`)
+  const RestaurantDetail = restaurant.find((r) => r.id.toString() === id) // 改變變數名稱以避免衝突
+  if (RestaurantDetail) {
+    res.render('detail', { restaurant: RestaurantDetail }) // 傳遞給樣板的仍然是 restaurant
+  } else {
+    res.status(404).send('Restaurant not found')
+  }
 })
+
+
 
 // app.listen 會啟動伺服器，並且執行一個回呼函數來顯示伺服器正在運行的訊息。
 app.listen(port, () => {
